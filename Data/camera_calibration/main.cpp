@@ -1,3 +1,10 @@
+//
+//  Calibration.mm
+//  Reconstruction_zyx
+//
+//  Created by Yuxuan Zhang on 28/11/24.
+//
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/highgui.hpp>
@@ -33,14 +40,11 @@ std::tuple<double, double, double, double, double> calibrateCameraAndGetDistorti
     const int CHESSBOARD_COLS = 8;
     const float SQUARE_SIZE = 25.0;
 
-    // 加载图片
     std::vector<std::string> imagePaths = loadImagePaths(folderPath);
-
     if (imagePaths.empty()) {
         throw std::runtime_error("No JPEG images found in the folder: " + folderPath);
     }
 
-    // 准备棋盘格世界坐标
     std::vector<cv::Point3f> objectPoints;
     for (int i = 0; i < CHESSBOARD_ROWS; ++i) {
         for (int j = 0; j < CHESSBOARD_COLS; ++j) {
@@ -48,8 +52,8 @@ std::tuple<double, double, double, double, double> calibrateCameraAndGetDistorti
         }
     }
 
-    std::vector<std::vector<cv::Point3f>> objectPointsList;  // 世界坐标系
-    std::vector<std::vector<cv::Point2f>> imagePointsList;  // 图像坐标系
+    std::vector<std::vector<cv::Point3f>> objectPointsList;
+    std::vector<std::vector<cv::Point2f>> imagePointsList;
 
     for (const auto& imagePath : imagePaths) {
         cv::Mat image = cv::imread(imagePath, cv::IMREAD_COLOR);
@@ -83,7 +87,6 @@ std::tuple<double, double, double, double, double> calibrateCameraAndGetDistorti
     double reprojectionError = cv::calibrateCamera(objectPointsList, imagePointsList, imageSize,
                                                    cameraMatrix, distCoeffs, rvecs, tvecs);
 
-    // 提取畸变参数
     if (distCoeffs.cols < 5) {
         throw std::runtime_error("Insufficient distortion coefficients returned!");
     }
@@ -97,20 +100,7 @@ std::tuple<double, double, double, double, double> calibrateCameraAndGetDistorti
     return {k1, k2, p1, p2, k3};
 }
 
-int main() {
-    try {
-        std::string folderPath = "../pictures";  // 替换为实际文件夹路径
-        auto [k1, k2, p1, p2, k3] = calibrateCameraAndGetDistortion(folderPath);
-
-        std::cout << "Distortion coefficients:" << std::endl;
-        std::cout << "k1 = " << k1 << std::endl;
-        std::cout << "k2 = " << k2 << std::endl;
-        std::cout << "p1 = " << p1 << std::endl;
-        std::cout << "p2 = " << p2 << std::endl;
-        std::cout << "k3 = " << k3 << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return -1;
-    }
-    return 0;
+// 封装成可调用函数
+std::tuple<double, double, double, double, double> getDistortionCoefficients(const std::string& folderPath) {
+    return calibrateCameraAndGetDistortion(folderPath);
 }

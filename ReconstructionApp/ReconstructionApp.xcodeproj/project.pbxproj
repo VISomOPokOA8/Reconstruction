@@ -6,8 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		11004E052D00C145006E58CF /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11004E042D00C145006E58CF /* opencv2.framework */; };
+		11004E0B2D00C262006E58CF /* OpenCVWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 11004E0A2D00C262006E58CF /* OpenCVWrapper.mm */; };
+		11004E0D2D00C271006E58CF /* OpenCVWrapper.h in Sources */ = {isa = PBXBuildFile; fileRef = 11004E0C2D00C271006E58CF /* OpenCVWrapper.h */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
-		114897BC2CF8930C001C7BBC /* CopyFiles */ = {
+		11BE2C832CF9BCE6001DE147 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -19,40 +25,67 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		114897BE2CF8930C001C7BBC /* Reconstruction_zyx */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Reconstruction_zyx; sourceTree = BUILT_PRODUCTS_DIR; };
+		11004E042D00C145006E58CF /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = opencv2.framework; sourceTree = "<group>"; };
+		11004E092D00C262006E58CF /* ReconstructionApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReconstructionApp-Bridging-Header.h"; sourceTree = "<group>"; };
+		11004E0A2D00C262006E58CF /* OpenCVWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OpenCVWrapper.mm; sourceTree = "<group>"; };
+		11004E0C2D00C271006E58CF /* OpenCVWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenCVWrapper.h; sourceTree = "<group>"; };
+		11004E0E2D00C30B006E58CF /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
+		11BE2C852CF9BCE6001DE147 /* ReconstructionApp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ReconstructionApp; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		114897C02CF8930C001C7BBC /* Reconstruction_zyx */ = {
+		11BE2C872CF9BCE6001DE147 /* ReconstructionApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Reconstruction_zyx;
+			path = ReconstructionApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		114897BB2CF8930C001C7BBC /* Frameworks */ = {
+		11BE2C822CF9BCE6001DE147 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11004E052D00C145006E58CF /* opencv2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		114897B52CF8930C001C7BBC = {
+		11004E032D00C0D5006E58CF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				114897C02CF8930C001C7BBC /* Reconstruction_zyx */,
-				114897BF2CF8930C001C7BBC /* Products */,
+				11004E042D00C145006E58CF /* opencv2.framework */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
+		11004E072D00C225006E58CF /* Wrappers */ = {
+			isa = PBXGroup;
+			children = (
+				11004E0A2D00C262006E58CF /* OpenCVWrapper.mm */,
+				11004E0C2D00C271006E58CF /* OpenCVWrapper.h */,
+				11004E092D00C262006E58CF /* ReconstructionApp-Bridging-Header.h */,
+				11004E0E2D00C30B006E58CF /* PrefixHeader.pch */,
+			);
+			path = Wrappers;
+			sourceTree = "<group>";
+		};
+		11BE2C7C2CF9BCE6001DE147 = {
+			isa = PBXGroup;
+			children = (
+				11004E072D00C225006E58CF /* Wrappers */,
+				11BE2C872CF9BCE6001DE147 /* ReconstructionApp */,
+				11BE2C862CF9BCE6001DE147 /* Products */,
+				11004E032D00C0D5006E58CF /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		114897BF2CF8930C001C7BBC /* Products */ = {
+		11BE2C862CF9BCE6001DE147 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				114897BE2CF8930C001C7BBC /* Reconstruction_zyx */,
+				11BE2C852CF9BCE6001DE147 /* ReconstructionApp */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,74 +93,77 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		114897BD2CF8930C001C7BBC /* Reconstruction_zyx */ = {
+		11BE2C842CF9BCE6001DE147 /* ReconstructionApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 114897C52CF8930C001C7BBC /* Build configuration list for PBXNativeTarget "Reconstruction_zyx" */;
+			buildConfigurationList = 11BE2C8C2CF9BCE6001DE147 /* Build configuration list for PBXNativeTarget "ReconstructionApp" */;
 			buildPhases = (
-				114897BA2CF8930C001C7BBC /* Sources */,
-				114897BB2CF8930C001C7BBC /* Frameworks */,
-				114897BC2CF8930C001C7BBC /* CopyFiles */,
+				11BE2C812CF9BCE6001DE147 /* Sources */,
+				11BE2C822CF9BCE6001DE147 /* Frameworks */,
+				11BE2C832CF9BCE6001DE147 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				114897C02CF8930C001C7BBC /* Reconstruction_zyx */,
+				11BE2C872CF9BCE6001DE147 /* ReconstructionApp */,
 			);
-			name = Reconstruction_zyx;
+			name = ReconstructionApp;
 			packageProductDependencies = (
 			);
-			productName = Reconstruction_zyx;
-			productReference = 114897BE2CF8930C001C7BBC /* Reconstruction_zyx */;
+			productName = ReconstructionApp;
+			productReference = 11BE2C852CF9BCE6001DE147 /* ReconstructionApp */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		114897B62CF8930C001C7BBC /* Project object */ = {
+		11BE2C7D2CF9BCE6001DE147 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1610;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
-					114897BD2CF8930C001C7BBC = {
+					11BE2C842CF9BCE6001DE147 = {
 						CreatedOnToolsVersion = 16.1;
+						LastSwiftMigration = 1610;
 					};
 				};
 			};
-			buildConfigurationList = 114897B92CF8930C001C7BBC /* Build configuration list for PBXProject "Reconstruction_zyx" */;
+			buildConfigurationList = 11BE2C802CF9BCE6001DE147 /* Build configuration list for PBXProject "ReconstructionApp" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 114897B52CF8930C001C7BBC;
+			mainGroup = 11BE2C7C2CF9BCE6001DE147;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 114897BF2CF8930C001C7BBC /* Products */;
+			productRefGroup = 11BE2C862CF9BCE6001DE147 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				114897BD2CF8930C001C7BBC /* Reconstruction_zyx */,
+				11BE2C842CF9BCE6001DE147 /* ReconstructionApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		114897BA2CF8930C001C7BBC /* Sources */ = {
+		11BE2C812CF9BCE6001DE147 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11004E0B2D00C262006E58CF /* OpenCVWrapper.mm in Sources */,
+				11004E0D2D00C271006E58CF /* OpenCVWrapper.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		114897C32CF8930C001C7BBC /* Debug */ = {
+		11BE2C8A2CF9BCE6001DE147 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -190,7 +226,7 @@
 			};
 			name = Debug;
 		};
-		114897C42CF8930C001C7BBC /* Release */ = {
+		11BE2C8B2CF9BCE6001DE147 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -245,24 +281,45 @@
 			};
 			name = Release;
 		};
-		114897C62CF8930C001C7BBC /* Debug */ = {
+		11BE2C8D2CF9BCE6001DE147 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 2R8LZ5R544;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ReconstructionApp",
+					"$(PROJECT_DIR)/Frameworks",
+				);
+				GCC_PREFIX_HEADER = "$(SRCROOT)/Wrappers/PrefixHeader.pch";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Frameworks/opencv2.framework/Headers";
+				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Wrappers/ReconstructionApp-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
-		114897C72CF8930C001C7BBC /* Release */ = {
+		11BE2C8E2CF9BCE6001DE147 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 2R8LZ5R544;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ReconstructionApp",
+					"$(PROJECT_DIR)/Frameworks",
+				);
+				GCC_PREFIX_HEADER = "$(SRCROOT)/Wrappers/PrefixHeader.pch";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Frameworks/opencv2.framework/Headers";
+				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Wrappers/ReconstructionApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -270,25 +327,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		114897B92CF8930C001C7BBC /* Build configuration list for PBXProject "Reconstruction_zyx" */ = {
+		11BE2C802CF9BCE6001DE147 /* Build configuration list for PBXProject "ReconstructionApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				114897C32CF8930C001C7BBC /* Debug */,
-				114897C42CF8930C001C7BBC /* Release */,
+				11BE2C8A2CF9BCE6001DE147 /* Debug */,
+				11BE2C8B2CF9BCE6001DE147 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		114897C52CF8930C001C7BBC /* Build configuration list for PBXNativeTarget "Reconstruction_zyx" */ = {
+		11BE2C8C2CF9BCE6001DE147 /* Build configuration list for PBXNativeTarget "ReconstructionApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				114897C62CF8930C001C7BBC /* Debug */,
-				114897C72CF8930C001C7BBC /* Release */,
+				11BE2C8D2CF9BCE6001DE147 /* Debug */,
+				11BE2C8E2CF9BCE6001DE147 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 114897B62CF8930C001C7BBC /* Project object */;
+	rootObject = 11BE2C7D2CF9BCE6001DE147 /* Project object */;
 }
