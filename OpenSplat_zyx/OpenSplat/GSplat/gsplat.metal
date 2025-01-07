@@ -2,7 +2,7 @@
 //  gsplat_metal.metal
 //  OpenSplat
 //
-//  Created by Yuxuan Zhang on 24/12/24.
+//  Created by Yuxuan Zhang on 1/5/25.
 //
 
 #include <metal_stdlib>

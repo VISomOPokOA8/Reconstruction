@@ -25,83 +25,24 @@ func degFromSh(numBases: Int) -> Int {
 
 let C0: Double = 0.28209479177387814
 
-func rgb2sh(rgb: MTLBuffer, device: MTLDevice, queue: MTLCommandQueue) -> MTLBuffer? {
-    guard let library = device.makeDefaultLibrary(),
-          let function = library.makeFunction(name: "rgb2sh"),
-          let pipeline = try? device.makeComputePipelineState(function: function),
-          let commandBuffer = queue.makeCommandBuffer(),
-          let encoder = commandBuffer.makeComputeCommandEncoder() else {
-        print("Failed to set up Metal compute pipeline.")
-        return nil
+func rgb2sh(rgb: [SIMD3<Float>]) -> [SIMD3<Float>] {
+    return rgb.map { color in
+        return SIMD3<Float>(
+            (color.x - 0.5) * Float(C0),
+            (color.y - 0.5) * Float(C0),
+            (color.z - 0.5) * Float(C0))
     }
-    
-    let length = rgb.length
-    guard let resultBuffer = device.makeBuffer(length: length, options: .storageModeShared) else {
-        print("Failed to create result buffer.")
-        return nil
-    }
-    
-    var c0: Float = Float(C0)
-    guard let c0Buffer = device.makeBuffer(bytes: &c0, length: MemoryLayout<Float>.size, options: .storageModeShared) else {
-        print("Failed to create constant buffer.")
-        return nil
-    }
-    
-    encoder.setComputePipelineState(pipeline)
-    encoder.setBuffer(rgb, offset: 0, index: 0)
-    encoder.setBuffer(resultBuffer, offset: 0, index: 1)
-    encoder.setBuffer(c0Buffer, offset: 0, index: 2)
-    
-    let threadGroupSize = MTLSize(width: 256, height: 1, depth: 1)
-    let threadGroups = MTLSize(width: (length + 255) / 256, height: 1, depth: 1)
-    encoder.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadGroupSize)
-    encoder.endEncoding()
-    
-    commandBuffer.commit()
-    commandBuffer.waitUntilCompleted()
-    
-    return resultBuffer
 }
 
-func sh2rgb(sh: MTLBuffer, device: MTLDevice, queue: MTLCommandQueue) -> MTLBuffer? {
-    guard let library = device.makeDefaultLibrary(),
-          let function = library.makeFunction(name: "sh2rgb"),
-          let pipeline = try? device.makeComputePipelineState(function: function),
-          let commandBuffer = queue.makeCommandBuffer(),
-          let encoder = commandBuffer.makeComputeCommandEncoder() else {
-        print("Failed to set up Metal compute pipeline.")
-        return nil
+func sh2rgb(sh: [SIMD3<Float>]) -> [SIMD3<Float>] {
+    return sh.map { coeffs in
+        return SIMD3<Float>(
+            max(0.0, min(1.0, coeffs.x * Float(C0) + 0.5)),
+            max(0.0, min(1.0, coeffs.y * Float(C0) + 0.5)),
+            max(0.0, min(1.0, coeffs.z * Float(C0) + 0.5))
+        )
     }
-
-    let length = sh.length
-    guard let resultBuffer = device.makeBuffer(length: length, options: .storageModeShared) else {
-        print("Failed to create result buffer.")
-        return nil
-    }
-
-    var c0: Float = Float(C0)
-    guard let c0Buffer = device.makeBuffer(bytes: &c0, length: MemoryLayout<Float>.size, options: .storageModeShared) else {
-        print("Failed to create constant buffer.")
-        return nil
-    }
-
-    encoder.setComputePipelineState(pipeline)
-    encoder.setBuffer(sh, offset: 0, index: 0)
-    encoder.setBuffer(resultBuffer, offset: 0, index: 1)
-    encoder.setBuffer(c0Buffer, offset: 0, index: 2)
-
-    let threadGroupSize = MTLSize(width: 256, height: 1, depth: 1)
-    let threadGroups = MTLSize(width: (length + 255) / 256, height: 1, depth: 1)
-    encoder.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadGroupSize)
-    encoder.endEncoding()
-
-    commandBuffer.commit()
-    commandBuffer.waitUntilCompleted()
-
-    return resultBuffer
 }
-
-#if METAL
 
 class SphericalHarmonics {
     func forward(ctx: inout [String: Any], degreesToUse: Int, viewDirs: MTLBuffer, coeffs: MTLBuffer, mtlctx: MetalContext) -> MTLBuffer? {
@@ -137,16 +78,5 @@ class SphericalHarmonics {
         }
         
         return [MTLBuffer?](arrayLiteral: nil, nil, v_coeffs).compactMap { $0 }
-    }
-}
-
-#endif
-
-class SphericalHarmonicsCPU {
-    func apply(degreesToUse: Int, viewdirs: [[Float]], coeffs: [[Float]]) -> [[Float]] {
-        let numPoints = coeffs.count
-        let degree = degFromSh(numBases: coeffs[0].count)
-        
-        return compute_sh_forward_tensor_cpu(num_points: numPoints, degree: degree, degrees_to_use: degreesToUse, viewdirs: viewdirs, coeffs: coeffs)
     }
 }

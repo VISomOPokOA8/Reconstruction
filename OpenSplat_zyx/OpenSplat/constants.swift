@@ -7,5 +7,5 @@
 
 import Foundation
 
-let PI = 3.14159265358979323846
+let PI: Float = 3.14159265358979323846
 let FLOAT_EPS = 1e-9

@@ -371,33 +371,3 @@ func readPointSet(filename: String) throws -> PointSet? {
 func fileExists(path: String) -> Bool {
     return FileManager.default.fileExists(atPath: path)
 }
-
-//
-//  Customized Functions
-//
-
-protocol KDTree {
-    init(_ param1: Int, _ pointSet: PointSet, _ param2: size_t)
-    func knnSearch(_ point: SIMD3<Float>, _ count: Int, _ indices: inout [size_t], _ sqrDists: inout [Float])
-}
-
-struct MyKDTree: KDTree {
-    var param1: Int
-    var pointSet: PointSet
-    var param2: size_t
-
-    init(_ param1: Int, _ pointSet: PointSet, _ param2: size_t) {
-        self.param1 = param1
-        self.pointSet = pointSet
-        self.param2 = param2
-    }
-
-    func knnSearch(_ point: SIMD3<Float>, _ count: Int, _ indices: inout [size_t], _ sqrDists: inout [Float]) {
-        // Implement nearest neighbor search logic here
-        // For demonstration, we just set dummy data
-        for i in 0..<count {
-            indices[i] = size_t(i)
-            sqrDists[i] = Float(i) * 0.5
-        }
-    }
-}

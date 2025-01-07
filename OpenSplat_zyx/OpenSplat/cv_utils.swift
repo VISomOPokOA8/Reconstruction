@@ -9,7 +9,7 @@ import Foundation
 import Metal
 import MetalKit
 
-func imreadRGB(filename: String, device: MTLDevice) -> MTLTexture? {
+func imreadRGB(filename: String, device: MTLDevice) -> [[[Float]]] {
     guard let nsImage = NSImage(contentsOfFile: filename),
           let tiffData = nsImage.tiffRepresentation,
           let bitmapImage = NSBitmapImageRep(data: tiffData),

@@ -8,8 +8,6 @@
 import Foundation
 import Metal
 
-#if METAL
-
 func binAndSortGaussians(numpoints: Int, numIntersects: Int, xys: MTLBuffer, depths: MTLBuffer, radii: MTLBuffer, numTilesHit: MTLBuffer, tileBounds: SIMD3<Int>, mtlctx: MetalContext) -> (MTLBuffer?, MTLBuffer?, MTLBuffer?, MTLBuffer?, MTLBuffer?) {
     let t = map_gaussian_to_intersects_tensor(num_points: numpoints, num_intersects: numIntersects, xys: xys, depths: depths, radii: radii, num_tiles_hit: numTilesHit, tile_bounds: tileBounds, context: mtlctx)
     guard let isectIds = t.0, let gaussianIds = t.1 else {
@@ -207,60 +205,4 @@ func tensor_cumsum(input: MTLBuffer, device: MTLDevice, queue: MTLCommandQueue) 
     commandBuffer.waitUntilCompleted()
 
     return outputBuffer
-}
-
-#endif
-
-class RasterizeGaussiansCPU {
-    func forward(ctx: inout [String: Any], xys: [[Float]], radii: [Int], conics: [[Float]], colors: [[Float]], opacities: [Float], cov2d: [[[Float]]], camDepths: [Float], imgHeight: Int, imgWidth: Int, background: [Float]) -> [[[Float]]] {
-        let numPoints = xys.count
-        
-        let t = rasterize_forward_tensor_cpu(height: imgHeight, width: imgWidth, xys: xys, conics: conics, colors: colors, opacities: opacities, background: background, cov2d: cov2d, camDepths: camDepths)
-        let outImg = t.0
-        let finalTs = t.1
-        let px2gid = t.2
-        
-        ctx["px2gid"] = px2gid
-        ctx["imgHeight"] = imgHeight
-        ctx["imgWidth"] = imgWidth
-        ctx["rasterizeBuffers"] = [xys, conics, colors, opacities, background, cov2d, camDepths, finalTs]
-        
-        return outImg
-    }
-    
-    func backward(ctx: inout [String: Any], grad_outputs: [Any]) -> [Any?]? {
-        guard let v_outImg = grad_outputs.first as? [[[Float]]] else {
-            print("grad_outputs must contain at least one buffer.")
-            return nil
-        }
-        
-        guard let imgHeight = ctx["imgHeight"] as? Int,
-              let imgWidth = ctx["imgWidth"] as? Int,
-              let px2gid = ctx["px2gid"] as? [[Int]],
-              let rasterizeBuffers = ctx["rasterizeBuffers"] as? [Any] else {
-            print("Missing context data.")
-            return nil
-        }
-        
-        let xys = rasterizeBuffers[0] as! [[Float]]
-        let conics = rasterizeBuffers[1] as! [[Float]]
-        let colors = rasterizeBuffers[2] as! [[Float]]
-        let opacity = rasterizeBuffers[3] as! [Float]
-        let background = rasterizeBuffers[4] as! [Float]
-        let cov2d = rasterizeBuffers[5] as! [[Float]]
-        let camDepths = rasterizeBuffers[6] as! [Float]
-        let finalTs = rasterizeBuffers[7] as! [[Float]]
-        
-        // Initialize v_outAlpha as a zero-filled array with appropriate dimensions
-        let v_outAlpha = [[Float]](repeating: [Float](repeating: 0.0, count: imgWidth), count: imgHeight)
-        
-        let t = rasterize_backward_tensor_cpu(height: imgHeight, width: imgWidth, xys: xys, conics: conics, colors: colors, opacities: opacity, background: background, cov2d: cov2d, camDepths: camDepths, finalTs: finalTs, px2gid: px2gid, v_output: v_outImg, v_output_alpha: v_outAlpha)
-        
-        let v_xy = t.0
-        let v_conic = t.1
-        let v_colors = t.2
-        let v_opacity = t.3
-        
-        return [v_xy, nil, v_conic, v_colors, v_opacity, nil, nil, nil, nil, nil]
-    }
 }
