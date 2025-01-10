@@ -49,9 +49,9 @@ class Model {
     var means: [SIMD3<Float>]
     var scales: [SIMD3<Float>]
     var quats: [SIMD4<Float>]
-    var featuresDc: [[SIMD3<Float>]]
+    var featuresDc: [SIMD3<Float>]
     var featuresRest: [[SIMD3<Float>]]
-    var opacities: [[Float]]
+    var opacities: [Float]
     
     var meansOpt: AdamOptimizer?
     var scalesOpt: AdamOptimizer?
@@ -62,7 +62,7 @@ class Model {
     
     var meansOptSchedular: OptimScheduler?
     
-    var radii: [SIMD3<Float>]
+    var radii: [Int]
     var xys: [SIMD2<Float>]
     var lastHeight: Int
     var lastWidth: Int
@@ -94,6 +94,21 @@ class Model {
     var scale: Float
     var translation: SIMD3<Float>
     
+    //
+    // customized properties
+    //
+    
+    var meansGrad: [SIMD3<Float>]
+    var scalesGrad: [SIMD3<Float>]
+    var quatsGrad: [SIMD4<Float>]
+    var featuresDcGrad: [SIMD3<Float>]
+    var featuresRestGrad: [[SIMD3<Float>]]
+    var opacitiesGrad: [Float]
+    
+    var xysGrad: [SIMD2<Float>]
+    
+    // end
+    
     init(inputData: InputData, numCameras: Int, numDownscales: Int, resolutionSchedule: Int, shDegree: Int, shDegreeInterval: Int, refineEvery: Int, warmupLength: Int, resetAlphaEvery: Int, desifyGradThresh: Float, desifySizeThresh: Float, stopScreenSizeAt: Int, splitScreenSize: Float, maxSteps: Int, keepCrs: Bool, device: MTLDevice) {
         self.numCameras = numCameras
         self.numDownscales = numDownscales
@@ -118,22 +133,37 @@ class Model {
         self.translation = inputData.translation
         
         self.means = inputData.points.xyz
+        self.meansGrad = Array(repeating: SIMD3<Float>(), count: means.count)
         self.scales = PointsTensor(tensor: inputData.points.xyz).scales().map { SIMD3<Float>(log($0), log($0), log($0)) }
+        self.scalesGrad = Array(repeating: SIMD3<Float>(), count: scales.count)
         self.quats = randomQuatTensor(n: numPoints)
+        self.quatsGrad = Array(repeating: SIMD4<Float>(), count: quats.count)
         
         let dimSh = num_sh_bases(degree: shDegree)
-        var shs = [[SIMD3<Float>]](repeating: [SIMD3<Float>](repeating: [0.0, 0.0, 0.0], count: dimSh), count: numPoints)
+        var shs = Array(repeating: Array(repeating: SIMD3<Float>(0.0, 0.0, 0.0), count: dimSh), count: numPoints)
         
         let shs_0 = rgb2sh(rgb: inputData.points.rgb.map { SIMD3<Float>($0) / 255.0 } )
         for i in 0..<numPoints {
             shs[i][0] = shs_0[i]
         }
         
-        self.featuresDc = shs.map { Array(arrayLiteral: $0[0]) }
+        self.featuresDc = shs.map { $0[0] }
+        self.featuresDcGrad = Array(repeating: SIMD3<Float>(), count: featuresDc.count)
         self.featuresRest = shs.map { Array($0[1..<dimSh]) }
-        self.opacities = [[Float]](repeating: [Float](repeating: 0.1, count: 1), count: numPoints)
+        self.featuresRestGrad = Array(repeating: Array(repeating: SIMD3<Float>(), count: dimSh), count: featuresRest.count)
+        self.opacities = Array(repeating: log(0.1 / (1.0 - 0.1)), count: numPoints)
+        self.opacitiesGrad = Array(repeating: Float(), count: opacities.count)
         
         self.backgroundColor = SIMD3<Float>(0.613, 0.0101, 0.3984)
+        
+        self.meansOpt =
+        self.scalesOpt =
+        self.quatsOpt =
+        self.featuresDcOpt =
+        self.featuresRestOpt =
+        self.opacitiesOpt =
+        
+        self.meansOptSchedular =
     }
                                                                                              
     deinit {
@@ -147,7 +177,7 @@ class Model {
         self.meansOptSchedular = nil
     }
     
-    func forward(cam: Camera, step: Int) -> [[[SIMD3<Float>]]] {
+    func forward(cam: Camera, step: Int) -> [[SIMD3<Float>]] {
         let scaleFactor = Float(getDownscaleFactor(step: step))
         let fx = cam.fx / scaleFactor
         let fy = cam.fy / scaleFactor
@@ -187,41 +217,40 @@ class Model {
         let fovY = 2.0 * atan(Float(width) / (2.0 * fy))
         
         let projMat = projectMatrix(zNear: 0.001, zFar: 1000.0, fovX: fovX, fovY: fovY)
-        let colors = zip(featuresDc.map { $0[0] }, featuresRest).map { dc, rest in
-            [dc] + rest
-        }
+        let colors = zip(featuresDc.map { [$0] }, featuresRest).map { $0 + $1 }
         
-        let conics: [simd_float2x2]
-        let depths: [Int]
-        let numTilesHit: [Float]
-        let cov2d: [simd_float2x2]
-        let camDepths: [Float]
-        let rgb:
-        
-        let tileBounds: TileBounds = ((width + BLOCK_X - 1) / BLOCK_X, (height + BLOCK_Y - 1) / BLOCK_Y, 1)
-        let p = ProjectGaussiansCPU().apply(means: means,
-                                            scales: scales,
-                                            globScale: 1,
-                                            quats: quats.map { $0 / simd_normalize($0).z},
-                                            viewMat: viewMat,
-                                            projMat: projMat,
-                                            fx: fx,
-                                            fy: fy,
-                                            cx: cx,
-                                            cy: cy,
-                                            imgHeight: height,
-                                            imgWidth: width)
+        let tileBounds: TileBounds = ((width + BLOCK_X - 1) / BLOCK_X,
+                                      (height + BLOCK_Y - 1) / BLOCK_Y,
+                                      1)
+        let p = ProjectGaussians().apply(means: means,
+                                         scales: scales.map { exp($0) },
+                                         globScale: 1.0,
+                                         quats: quats.map { $0 / simd_normalize($0) },
+                                         viewMat: viewMat,
+                                         projMat: simd_mul(projMat, viewMat),
+                                         fx: fx, fy: fy,
+                                         cx: cx, cy: cy,
+                                         imgHeight: height, imgWidth: width,
+                                         tileBounds: tileBounds)
         self.xys = p.0
-        depths = p.1
+        let depths = p.1
         self.radii = p.2
-        conics = p.3
-        numTilesHit = p.4
+        let conics = p.3
+        let numTilesHit = p.4
         
-        let totalSum = radii.reduce(SIMD3<Float>(0.0, 0.0, 0.0)) { $0 + $1 }
-        if totalSum.x + totalSum.y + totalSum.z == 0.0 {
-            return Array(repeating: Array(repeating: [backgroundColor], count: width), count: height)
+        if radii.reduce(0, +) == 0 {
+            return Array(repeating: Array(repeating: backgroundColor, count: width), count: height)
         }
+        self.xysGrad = Array(repeating: SIMD2<Float>(), count: xys.count)
         
+        var viewDirs = means.map { $0 - T }
+        viewDirs = viewDirs.map { $0 / simd_normalize($0) }
+        let degreesToUse = min(step / shDegreeInterval, shDegree)
+        var rgbs = SphericalHarmonics().apply(degreesToUse: degreesToUse, viewDirs: viewDirs, coeffs: colors)
+        
+        rgbs = rgbs.map { SIMD3<Float>(min($0.x + 0.5, 0.0), min($0.y + 0.5, 0.0), min($0.z + 0.5, 0.0)) }
+        
+        let rgb = 
     }
     
     func optimizersZeroGrad() {
