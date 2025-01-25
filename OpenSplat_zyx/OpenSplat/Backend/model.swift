@@ -5,6 +5,7 @@
 //  Created by Yuxuan Zhang on 1/4/25.
 //
 
+import Accelerate
 import Foundation
 import Metal
 import simd
@@ -37,12 +38,15 @@ func projectMatrix(zNear: Float, zFar: Float, fovX: Float, fovY: Float) -> simd_
     )
 }
 
-func psnr() {
-    
+func psnr(rendered: [[SIMD3<Float>]], gt: [[SIMD3<Float>]]) -> Float {
+    let result = zip(rendered, gt).map { zip($0, $1).map { (pow($0.x - $1.x, 2.0) + pow($0.y - $1.y, 2.0) + pow($0.z - $1.z, 2.0)) / 3.0 } }
+    let mse = mean(of: result)
+    return 10.0 * log10(1.0 / mse)
 }
 
-func l1() {
-    
+func l1(rendered: [[SIMD3<Float>]], gt: [[SIMD3<Float>]]) -> Float {
+    let result = zip(rendered, gt).map { zip($0, $1).map { (abs($0.x - $1.x) + abs($0.y - $1.y) + abs($0.z - $1.z)) / 3.0 } }
+    return mean(of: result)
 }
 
 class Model {
@@ -156,14 +160,14 @@ class Model {
         
         self.backgroundColor = SIMD3<Float>(0.613, 0.0101, 0.3984)
         
-        self.meansOpt =
-        self.scalesOpt =
-        self.quatsOpt =
-        self.featuresDcOpt =
-        self.featuresRestOpt =
-        self.opacitiesOpt =
+        self.meansOpt = AdamOptimizer(learningRate: 0.00016, paramSize: means.count)
+        self.scalesOpt = AdamOptimizer(learningRate: 0.005, paramSize: scales.count)
+        self.quatsOpt = AdamOptimizer(learningRate: 0.001, paramSize: quats.count, paramType: SIMD4<Float>.self)
+        self.featuresDcOpt = AdamOptimizer(learningRate: 0.0025, paramSize: featuresDc.count)
+        self.featuresRestOpt = AdamOptimizer(learningRate: 0.000125, paramSize: featuresRest.count, paramType: [SIMD3<Float>].self)
+        self.opacitiesOpt = AdamOptimizer(learningRate: 0.05, paramSize: opacities.count)
         
-        self.meansOptSchedular =
+        self.meansOptSchedular = OptimScheduler(opt: meansOpt!, lrFinal: 0.0000016, maxSteps: maxSteps)
     }
                                                                                              
     deinit {
@@ -250,27 +254,55 @@ class Model {
         
         rgbs = rgbs.map { SIMD3<Float>(min($0.x + 0.5, 0.0), min($0.y + 0.5, 0.0), min($0.z + 0.5, 0.0)) }
         
-        let rgb = 
+        var rgb = RasterizeGaussians().apply(xys: xys,
+                                             depths: depths,
+                                             radii: radii,
+                                             conics: conics,
+                                             numTilesHit: numTilesHit,
+                                             colors: rgbs,
+                                             opacity: opacities.map { 1.0 / (1.0 - exp(-$0)) },
+                                             imgHeight: height,
+                                             imgWidth: width,
+                                             background: backgroundColor)
+        
+        rgb = rgb.map { $0.map { SIMD3<Float>(max($0.x, 1.0), max($0.y, 1.0), max($0.z, 1.0)) } }
+        
+        return rgb
     }
     
     func optimizersZeroGrad() {
-        
+        meansOpt?.zeroGrad()
+        scalesOpt?.zeroGrad()
+        quatsOpt?.zeroGrad()
+        featuresDcOpt?.zeroGrad()
+        featuresRestOpt?.zeroGrad()
+        opacitiesOpt?.zeroGrad()
     }
     
     func optimizersStep() {
-        
+        meansOpt?.step(params: &means, grads: meansGrad)
+        scalesOpt?.step(params: &scales, grads: scalesGrad)
+        quatsOpt?.step(params: &quats, grads: quatsGrad)
+        featuresDcOpt?.step(params: &featuresDc, grads: featuresDcGrad)
+        featuresRestOpt?.step(params: &featuresRest, grads: featuresRestGrad)
+        opacitiesOpt?.step(params: &opacities, grads: opacitiesGrad)
     }
     
     func optimizersStep(step: Int) {
-        
+        meansOptSchedular?.step(step: step)
     }
     
     func getDownscaleFactor(step: Int) -> Int {
-        
+        return Int(pow(2.0, max(Double(numDownscales) - Double(step) / Double(resolutionSchedule), 0.0)))
     }
     
     func afterTrain(step: Int) {
-        
+        if step < stopSplitAt {
+            let visibleMask = radii.map { $0 > 0 }
+            
+            self.xysGrad = 
+            let grads =
+        }
     }
     
     func save(filename: String) {
@@ -289,8 +321,10 @@ class Model {
         
     }
     
-    func mainLoss() {
-        
+    func mainLoss(rgb: [[SIMD3<Float>]], gt: [[SIMD3<Float>]], ssimWeight: Float) -> Float {
+        let ssimLoss = 1.0 - ssim.eval(rendered: rgb, gt: gt)
+        let l1Loss = l1(rendered: rgb, gt: gt)
+        return (1.0 - ssimWeight) * l1Loss + ssimWeight * ssimLoss
     }
     
     func addToOptimizer(optimizer: AdamOptimizer, newParam, idcs, nSamples: Int) {
@@ -300,4 +334,15 @@ class Model {
     func removeFromOptimizer(optimizer: AdamOptimizer, newParam, deletedMask) {
         
     }
+}
+
+//
+//  Customized Functions
+//
+
+func mean(of tensor: [[Float]]) -> Float {
+    let flat = tensor.flatMap { $0 }
+    var mean: Float = 0
+    vDSP_meanv(flat, 1, &mean, vDSP_Length(flat.count))
+    return mean
 }
